@@ -17,9 +17,9 @@ OBSERVATIONS = [] # observação é a unidade mínima de informação dentro de 
 epsilon = 0.9
 # associadas à um determinado estado (estado, estado-ação, estado seguinte, recompensa, observação adicional)
 episodes = []
-state_action_values : dict[tuple, list[float]] = {}
+state_action_values : dict[tuple, float] = {}
 
-def pick_move(state_action_values : dict[tuple, list[float]], curr_state):
+def pick_move(state_action_values : dict[tuple, float], curr_state):
     chance = random.random()
     action = None
     if (chance <= epsilon):
@@ -28,40 +28,47 @@ def pick_move(state_action_values : dict[tuple, list[float]], curr_state):
 
         # 1. find all possible future states for each avaiable action on current state
         population = []
-        weights = []
-        for curr_state_action in [(curr_state, a) for a in ACTIONS]: # ([current_state], [all possible actions])
-            population.append(curr_state_action[1])
-            qsa = state_action_values.get(curr_state_action)
-            if qsa is not None:
-                weights.append(qsa)
+        average_qsa_arr = []
+        for curr_state_action in [((curr_state[0], curr_state[1]), (a[0], a[1])) for a in ACTIONS]: # ([current_state], [all possible actions])
+            population.append(curr_state_action)
+
+            # the qsa sum divided by the quantity of a certain state action occurrences
+            # is nothing to do with the probability distribution
+            # wich is: the percentage of every possible action for that certain state (current state 'here')
+
+            # UNHASHABLE TYPE: 'LIST'! -> Key is probaly being composed by a list 
+            average_qsa = state_action_values.get(curr_state_action) # it must return a float representing the average 
+            # about the average: this average is measured by taking all qsa values for a certain state action value and 
+            # divide it by the number of times it appears in the sample (right?) 
+            if average_qsa is not None:
+                average_qsa_arr.append(average_qsa)
             else:
-                weights.append(0)
+                average_qsa_arr.append(0)
 
         print(f"population: {population}")
-        print(f"weights: {weights}")    
+        print(f"average_qsa_arr: {average_qsa_arr}")
+        
+        total_sum = sum(average_qsa_arr) if len(average_qsa_arr) > 0 else 1
 
-        #action = random.choices(population=[], weights=[]) 
-        action = random.choices(population, weights) 
+        # ValueError: Total of weights must be greater than zero
+        action = random.choices(population, weights=[w / (total_sum if total_sum > 0 else 1) for w in average_qsa_arr]) 
 
     if action is None:
         raise Exception
     
     return action
     
-
 def resume_episode(episode_number : int):
     import csv
     
     print(f"resuming episode number {episode_number}")
 
-    with open(f'./episodes/random/episode_{episode_number}.csv', 'w', newline='') as episodefile:
+    with open(f'./episodes/epsilon_0.9/episode_{episode_number}.csv', 'w', newline='') as episodefile:
         observation_writer = csv.writer(episodefile, delimiter=',')
         observation_writer.writerow(["current_state", "action", "reward", "q(s, a)", "next_state", "additional_observation"])
         
         # current_state, action, reward, next_state, observation : tuple
-        print(f"OBSERVATIONS: {OBSERVATIONS}")
         for i in range(len(OBSERVATIONS)):
-            print("_observation: {OBSERVATIONS[i]}" )
             _observations = OBSERVATIONS[i:] # the first will be 0:, the second will be 1:
             qsa = calculate_qsa(_observations, 1) # this will not work (it will be ZERO for every single first)
             observation_writer.writerow(
@@ -80,39 +87,40 @@ def calculate_qsa(observations, curr_gama) -> int:
     progressive_gama = curr_gama * GAMA
     return (gt * curr_gama) + calculate_qsa(observations[1:], progressive_gama)
 
+# this function only modifies the referenced structure
 get_acc_state_action_values(state_action_values)
 
 #score = 0
-current_state = INITIAL_STATE
+curr_state = INITIAL_STATE
 overall_counter = 1
 episode_size_counter = 1
 while overall_counter <= TRAINING_ROUNDS:
 
-    move = pick_move(state_action_values)
-    next_state = [current_state[0]+move[0], current_state[1]+move[1]] 
+    move = pick_move(state_action_values, curr_state)
+    next_state = [curr_state[0]+move[0], curr_state[1]+move[1]] 
     if not WALLS.__contains__(next_state) and ( (0 <= next_state[0] <= WIDTH -1) and (0 <= next_state[1] <= HEIGHT -1) ):
         if next_state == TERMINAL_STATE:
             OBSERVATIONS.append(
-                (current_state, (move[0], move[1]), 0, next_state, "Successfully reached the maze’s exit."))
+                (curr_state, (move[0], move[1]), 0, next_state, "Successfully reached the maze’s exit."))
             resume_episode(overall_counter)
             episode_size_counter = 0
             overall_counter += 1
-            current_state = INITIAL_STATE
+            curr_state = INITIAL_STATE
             continue
         else:
             OBSERVATIONS.append(
-                (current_state, (move[0], move[1]), -1, next_state, "Move accepted"))
+                (curr_state, (move[0], move[1]), -1, next_state, "Move accepted"))
         
-        current_state = next_state
+        curr_state = next_state
     else:
         OBSERVATIONS.append(
-            (current_state, (move[0], move[1]), -100, current_state, "Attempted to move into a wall or beyond the maze’s boundaries"))
+            (curr_state, (move[0], move[1]), -100, curr_state, "Attempted to move into a wall or beyond the maze’s boundaries"))
         
     if episode_size_counter == EPISODE_SIZE:
         resume_episode(overall_counter)
         episode_size_counter = 1
         overall_counter += 1
-        current_state = INITIAL_STATE
+        curr_state = INITIAL_STATE
     else:
         episode_size_counter += 1
 

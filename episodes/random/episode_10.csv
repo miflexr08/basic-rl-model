@@ -1,16 +1,11 @@
-current_state,action,reward,next_state,additional_observation
-"[0, 0]","(0, -1)",-100,"[0, 0]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 0]","(-1, 0)",-100,"[0, 0]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 0]","(-1, 0)",-100,"[0, 0]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 0]","(0, -1)",-100,"[0, 0]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 0]","(-1, 0)",-100,"[0, 0]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 0]","(0, 1)",-1,"[0, 1]",Move accepted
-"[0, 1]","(0, -1)",-1,"[0, 0]",Move accepted
-"[0, 0]","(0, -1)",-100,"[0, 0]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 0]","(0, -1)",-100,"[0, 0]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 0]","(0, 1)",-1,"[0, 1]",Move accepted
-"[0, 1]","(-1, 0)",-100,"[0, 1]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 1]","(0, 1)",-1,"[0, 2]",Move accepted
-"[0, 2]","(-1, 0)",-100,"[0, 2]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 2]","(0, 1)",-100,"[0, 2]",Attempted to move into a wall or beyond the maze’s boundaries
-"[0, 2]","(1, 0)",-1,"[1, 2]",Move accepted
+current_state,action,reward,"q(s, a)",next_state,additional_observation
+"[0, 0]","(1, 0)",-1,-32.367889404296875,"[1, 0]",Move accepted
+"[1, 0]","(0, -1)",-100,-125.4715576171875,"[1, 0]",Attempted to move into a wall or beyond the maze’s boundaries
+"[1, 0]","(0, 1)",-100,-101.88623046875,"[1, 0]",Attempted to move into a wall or beyond the maze’s boundaries
+"[1, 0]","(-1, 0)",-1,-7.544921875,"[0, 0]",Move accepted
+"[0, 0]","(0, 1)",-1,-26.1796875,"[0, 1]",Move accepted
+"[0, 1]","(1, 0)",-100,-100.71875,"[0, 1]",Attempted to move into a wall or beyond the maze’s boundaries
+"[0, 1]","(0, -1)",-1,-2.875,"[0, 0]",Move accepted
+"[0, 0]","(0, 1)",-1,-7.5,"[0, 1]",Move accepted
+"[0, 1]","(0, -1)",-1,-26.0,"[0, 0]",Move accepted
+"[0, 0]","(-1, 0)",-100,-100,"[0, 0]",Attempted to move into a wall or beyond the maze’s boundaries

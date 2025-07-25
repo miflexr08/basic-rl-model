@@ -1,0 +1,6 @@
+
+About the initial state:
+# Test it from a random state (?)
+
+About the terminal state:
+# the agent doesn't know that :D 

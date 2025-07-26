@@ -1,61 +1,49 @@
 import random 
 from constants import *
-from state_action_values import run as set_acc_state_action_values
+from action import Action
+from state_action_values import run as get_state_action_pairs_average_values
 
 OBSERVATIONS = [] # observação é a unidade mínima de informação dentro de um episódio. é o conjunto de propriedades 
 #epsilon = 1
 epsilon = 0.85
 # associadas à um determinado estado (estado, estado-ação, estado seguinte, recompensa, observação adicional)
 episodes = []
-state_action_values : dict[str, float] = {}
 
-def pick_move(state_action_values : dict[str, float], curr_state) -> str: # This str it's actually a key!
-
-    # But why the fuck my move is a fucking Key?!
+# Example: { ((x, y), (ax, ay)): 233.64 } 
+def pick_action(state_action_values : dict[tuple[tuple[int, int], tuple[int, int]], float], curr_state : tuple[int, int]) -> Action: 
 
     chance = random.random()
     action = None
     if (chance <= epsilon):
         action = str(random.choice(ACTIONS))
     else:
-        population : list[str] = []
-        average_qsa_arr = []
+        population_average_qsa : dict[tuple[tuple[int, int], tuple[int, int]], float] = { }
+        for state_action_pair in [(curr_state, a) for a in ACTIONS]: 
+            average_qsa = state_action_values.get(state_action_pair) 
+            population_average_qsa[state_action_pair] = average_qsa if average_qsa is not None else 0
 
-        # Build a better solution for this big messy!
-        # ((x, y), (ax, ay))
-        for state_action_pair in [f"({curr_state[0]}, {curr_state[1]}), {a}" for a in ACTIONS]: 
-            population.append(state_action_pair)
-
-            # * [ Must return a float representing the average ] *
-            # This average is measured by taking all qsa values for a certain state action value and divide it by the 
-            # number of times it appears in the sample 
-            average_qsa = state_action_values.get(state_action_pair) # The key must be in format '((x, y), (ax, ay))'
-            if average_qsa is not None:
-                average_qsa_arr.append(average_qsa)
-            else:
-                average_qsa_arr.append(0)
-
-        print(f"population: {population}")
-        print(f"average_qsa_arr: {average_qsa_arr}")
-
+        average_qsa_arr = list(population_average_qsa.values())
         min_point = min(average_qsa_arr)
         max_point = max(average_qsa_arr)
         sample_space = max_point - min_point
         if sample_space == 0:
-            action = random.choice(ACTIONS)
-            return str(action) 
-    
-        weights = [sample_space / (w if w > 0 else 1) for w in average_qsa_arr] # change this var name
-        normalized_w = [w / sum(weights) for w in weights] 
+            action_tuple = random.choice(ACTIONS)
+            return Action(action_tuple[0], action_tuple[1])
 
-        print(f"weights: {normalized_w}")
-        action = random.choices(population, weights)[0]
+        #potentials = [sample_space / (value if value > 0 else 1) for value in average_qsa_arr] 
+        population_less_effort_potentials = { key: (sample_space / (value if value > 0 else 1)) for key, value in population_average_qsa.items() } # dictionaty comprehension
+        # weight goes up as effort goes down
+        potentials_sum_up = sum(list(population_less_effort_potentials.values()))
+        weights = { key: (value / potentials_sum_up) for key, value in population_less_effort_potentials.items() }
+    
+        print(f"weights: {weights}")
+        action = random.choices(list(weights.keys()), list(weights.values()))[0]
 
     if action is None:
         raise Exception
     
-    print(f"Selected Action: {action}")
-    return action[0]
+    print(f"Selected Action: {action}") 
+    return Action(action[0], action[1])
     
 def resume_episode(episode_number : int):
     import csv
@@ -84,19 +72,16 @@ def calculate_qsa(observations, curr_gama) -> int:
     progressive_gama = curr_gama * GAMA
     return (gt * curr_gama) + calculate_qsa(observations[1:], progressive_gama)
 
-# this function only modifies the referenced structure
-set_acc_state_action_values(state_action_values)
+# Example: { ((x, y), (ax, ay)): 233.64 } 
+state_action_values = get_state_action_pairs_average_values()
 
 curr_state = INITIAL_STATE
 overall_counter = 1
 episode_size_counter = 1
 while overall_counter <= TRAINING_SIZE:
 
-    move = pick_move(state_action_values, curr_state) # state_action_values must be a class member
-
-    #print(f"Moving ...{move}\n")
-    print(f"move: {move}")
-    print(f"Moving {VISUAL_ACTIONS[ACTIONS.index(move)]}")
+    action = pick_action(state_action_values, (curr_state[0], curr_state[1])) # state_action_values must be a class member
+    print(f"Moving {action}")
     print(f"Now i am in the State: {curr_state}")
 
     next_state = [int(curr_state[0])+int(move[0]), int(curr_state[1])+int(move[1])] 

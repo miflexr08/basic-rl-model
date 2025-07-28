@@ -1,21 +1,28 @@
 import random 
 from constants import *
 from action import Action
+from state import State
 from state_action_values import run as get_state_action_pairs_average_values
 
-OBSERVATIONS = [] # observação é a unidade mínima de informação dentro de um episódio. é o conjunto de propriedades 
+# observação é a unidade mínima de informação dentro de um episódio. é o conjunto de propriedades 
+OBSERVATIONS = [] 
 #epsilon = 1
 epsilon = 0.85
+
 # associadas à um determinado estado (estado, estado-ação, estado seguinte, recompensa, observação adicional)
 episodes = []
 
 # Example: { ((x, y), (ax, ay)): 233.64 } 
 def pick_action(state_action_values : dict[tuple[tuple[int, int], tuple[int, int]], float], curr_state : tuple[int, int]) -> Action: 
 
+    # ACTIONS:
+    # [(0, 1), (1, 0), (0, -1), (-1, 0)]
+    # ACTIONS = [(0,1), (1, 0), (0, -1), (-1, 0)]  # up, right, down, left
+
     chance = random.random()
     action = None
     if (chance <= epsilon):
-        action = str(random.choice(ACTIONS))
+        action = random.choice(ACTIONS) 
     else:
         population_average_qsa : dict[tuple[tuple[int, int], tuple[int, int]], float] = { }
         for state_action_pair in [(curr_state, a) for a in ACTIONS]: 
@@ -37,12 +44,12 @@ def pick_action(state_action_values : dict[tuple[tuple[int, int], tuple[int, int
         weights = { key: (value / potentials_sum_up) for key, value in population_less_effort_potentials.items() }
     
         print(f"weights: {weights}")
-        action = random.choices(list(weights.keys()), list(weights.values()))[0]
+        # action = random.choices(list(weights.keys()), list(weights.values()))[0] ??
+        action = random.choices(ACTIONS, list(weights.values()))[0]
 
     if action is None:
         raise Exception
     
-    print(f"Selected Action: {action}") 
     return Action(action[0], action[1])
     
 def resume_episode(episode_number : int):
@@ -52,19 +59,19 @@ def resume_episode(episode_number : int):
         observation_writer = csv.writer(episodefile, delimiter=',')
         observation_writer.writerow(["current_state", "action", "reward", "q(s, a)", "next_state", "additional_observation"])
         
-        # current_state, action, reward, next_state, observation : tuple
+        # current_state, action, reward, qsa, next_state, monte_carlo_reward, observation 
         for i in range(len(OBSERVATIONS)):
-            _observations = OBSERVATIONS[i:] # the first will be 0:, the second will be 1:
-            qsa = calculate_qsa(_observations, 1) # this will not work (it will be ZERO for every single first)
+            _observations = OBSERVATIONS[i:] 
+            qsa = calculate_qsa(_observations, 1) 
             observation_writer.writerow(
-                [OBSERVATIONS[i][0], OBSERVATIONS[i][1], OBSERVATIONS[i][2], str(qsa), OBSERVATIONS[i][3], OBSERVATIONS[i][4]])
+                [str(OBSERVATIONS[i][0]), str(OBSERVATIONS[i][1]), OBSERVATIONS[i][2], str(qsa), str(OBSERVATIONS[i][3]), OBSERVATIONS[i][4]])
     
     episodes.append(OBSERVATIONS.copy())
     OBSERVATIONS.clear()
 
-# Can build a class to keep track of some variables like Obervations or gama for example (make it an abstraction)
+
 def calculate_qsa(observations, curr_gama) -> int:
-    # current_state, action, reward, next_state, monte_carlo_reward, observation : tuple
+    # current_state, action, reward, next_state, monte_carlo_reward, observation 
     gt = observations[0][2]
     if len(observations[0:]) == 1:
         return curr_gama * gt 
@@ -80,29 +87,30 @@ overall_counter = 1
 episode_size_counter = 1
 while overall_counter <= TRAINING_SIZE:
 
-    action = pick_action(state_action_values, (curr_state[0], curr_state[1])) # state_action_values must be a class member
-    print(f"Moving {action}")
+    action = pick_action(state_action_values, (curr_state.x, curr_state.y)) 
+    print(f"Moving {action}") # Error here
     print(f"Now i am in the State: {curr_state}")
 
-    next_state = [int(curr_state[0])+int(move[0]), int(curr_state[1])+int(move[1])] 
-    if not WALLS.__contains__(next_state) and ( (0 <= next_state[0] <= WIDTH -1) and (0 <= next_state[1] <= HEIGHT -1) ):
-        if next_state == TERMINAL_STATE: # do it should be explictly revealed?
+    next_state = curr_state + action 
+    if not WALLS.__contains__(next_state) and ( (0 <= next_state.x <= WIDTH -1) and (0 <= next_state.y <= HEIGHT -1) ):
+        if next_state == TERMINAL_STATE: # do it should be explictly revealed? 
             OBSERVATIONS.append(
-                (curr_state, (move[0], move[1]), 0, next_state, "Successfully reached the maze’s exit."))
+                (curr_state, action, 0, next_state, "Successfully reached the maze’s exit."))
             
             resume_episode(overall_counter)
+
             episode_size_counter = 0
             overall_counter += 1
             curr_state = INITIAL_STATE
             continue
         else:
             OBSERVATIONS.append(
-                (curr_state, (move[0], move[1]), -1, next_state, "Move accepted"))
+                (curr_state, action, -1, next_state, "Move accepted"))
         
         curr_state = next_state
     else:
         OBSERVATIONS.append(
-            (curr_state, (move[0], move[1]), -100, curr_state, "Attempted to move into a wall or beyond the maze’s boundaries"))
+            (curr_state, action, -100, curr_state, "Attempted to move into a wall or beyond the maze’s boundaries"))
         
     if episode_size_counter == EPISODE_SIZE:
         resume_episode(overall_counter)

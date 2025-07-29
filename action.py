@@ -12,6 +12,12 @@ class Action:
         self.y = y
 
     def __str__(self) -> str:
+        return f"{(self.x, self.y)}"
+    
+    def __add__(self, other):
+        return State(other.x + self.x,  other.y + self.y)
+
+    def get_graphics(self):
         if self.x == 0 and self.y == 1:
             return self.VISUAL_REPRESENTATIONS[0] 
         if self.x == 1 and self.y == 0:
@@ -21,9 +27,4 @@ class Action:
         if self.x == -1 and self.y == 0:
             return self.VISUAL_REPRESENTATIONS[3]
         
-        print(f"self.x: {self.x}")
-        print(f"self.y: {self.y}")
         raise Exception("Invalid action")
-    
-    def __add__(self, other):
-        return State(other.x + self.x,  other.y + self.y)

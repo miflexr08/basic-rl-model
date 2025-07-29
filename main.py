@@ -7,9 +7,9 @@ from state_action_values import run as get_state_action_pairs_average_values
 # observação é a unidade mínima de informação dentro de um episódio. é o conjunto de propriedades 
 OBSERVATIONS = [] 
 #epsilon = 1
-epsilon = 0.85
-
-# associadas à um determinado estado (estado, estado-ação, estado seguinte, recompensa, observação adicional)
+#epsilon = 0.85
+#epsilon = 0.75
+epsilon = 0.5
 episodes = []
 
 # Example: { ((x, y), (ax, ay)): 233.64 } 
@@ -18,7 +18,6 @@ def pick_action(state_action_values : dict[tuple[tuple[int, int], tuple[int, int
     # ACTIONS:
     # [(0, 1), (1, 0), (0, -1), (-1, 0)]
     # ACTIONS = [(0,1), (1, 0), (0, -1), (-1, 0)]  # up, right, down, left
-
     chance = random.random()
     action = None
     if (chance <= epsilon):
@@ -55,23 +54,23 @@ def pick_action(state_action_values : dict[tuple[tuple[int, int], tuple[int, int
 def resume_episode(episode_number : int):
     import csv
 
-    with open(f'./episodes/epsilon_0_85/episode_{episode_number}.csv', 'w', newline='') as episodefile:
+    with open(f'./episodes/epsilon_0_50/episode_{episode_number}.csv', 'w', newline='') as episodefile:
         observation_writer = csv.writer(episodefile, delimiter=',')
         observation_writer.writerow(["current_state", "action", "reward", "q(s, a)", "next_state", "additional_observation"])
         
+        print(f"OBSERVATIONS: {OBSERVATIONS}")
         # current_state, action, reward, qsa, next_state, monte_carlo_reward, observation 
         for i in range(len(OBSERVATIONS)):
             _observations = OBSERVATIONS[i:] 
             qsa = calculate_qsa(_observations, 1) 
             observation_writer.writerow(
-                [str(OBSERVATIONS[i][0]), str(OBSERVATIONS[i][1]), OBSERVATIONS[i][2], str(qsa), str(OBSERVATIONS[i][3]), OBSERVATIONS[i][4]])
+                [str(OBSERVATIONS[i][0]), str(OBSERVATIONS[i][1]), str(OBSERVATIONS[i][2]), str(qsa), str(OBSERVATIONS[i][3]), str(OBSERVATIONS[i][4])])
     
     episodes.append(OBSERVATIONS.copy())
     OBSERVATIONS.clear()
 
 
 def calculate_qsa(observations, curr_gama) -> int:
-    # current_state, action, reward, next_state, monte_carlo_reward, observation 
     gt = observations[0][2]
     if len(observations[0:]) == 1:
         return curr_gama * gt 
@@ -88,7 +87,7 @@ episode_size_counter = 1
 while overall_counter <= TRAINING_SIZE:
 
     action = pick_action(state_action_values, (curr_state.x, curr_state.y)) 
-    print(f"Moving {action}") # Error here
+    print(f"Moving {action.get_graphics()}") 
     print(f"Now i am in the State: {curr_state}")
 
     next_state = curr_state + action 

@@ -1,0 +1,16 @@
+current_state,action,reward,"q(s, a)",next_state,additional_observation
+"(0, 0)","(-1, 0)",-100,-100.45468008890748,"(0, 0)",Attempted to move into a wall or beyond the maze’s boundaries
+"(0, 0)","(1, 0)",-1,-1.818720355629921,"(1, 0)",Move accepted
+"(1, 0)","(1, 0)",-1,-3.274881422519684,"(2, 0)",Move accepted
+"(2, 0)","(1, 0)",-1,-9.099525690078735,"(3, 0)",Move accepted
+"(3, 0)","(1, 0)",-1,-32.39810276031494,"(4, 0)",Move accepted
+"(4, 0)","(1, 0)",-100,-125.59241104125977,"(4, 0)",Attempted to move into a wall or beyond the maze’s boundaries
+"(4, 0)","(0, -1)",-100,-102.36964416503906,"(4, 0)",Attempted to move into a wall or beyond the maze’s boundaries
+"(4, 0)","(-1, 0)",-1,-9.47857666015625,"(3, 0)",Move accepted
+"(3, 0)","(1, 0)",-1,-33.914306640625,"(4, 0)",Move accepted
+"(4, 0)","(1, 0)",-100,-131.6572265625,"(4, 0)",Attempted to move into a wall or beyond the maze’s boundaries
+"(4, 0)","(0, -1)",-100,-126.62890625,"(4, 0)",Attempted to move into a wall or beyond the maze’s boundaries
+"(4, 0)","(1, 0)",-100,-106.515625,"(4, 0)",Attempted to move into a wall or beyond the maze’s boundaries
+"(4, 0)","(-1, 0)",-1,-26.0625,"(3, 0)",Move accepted
+"(3, 0)","(0, 1)",-100,-100.25,"(3, 0)",Attempted to move into a wall or beyond the maze’s boundaries
+"(3, 0)","(-1, 0)",-1,-1,"(2, 0)",Move accepted

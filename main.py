@@ -6,14 +6,12 @@ from state_action_values import run as get_state_action_pairs_average_values
 
 # observação é a unidade mínima de informação dentro de um episódio. é o conjunto de propriedades 
 OBSERVATIONS = [] 
-#epsilon = 1
-#epsilon = 0.85
-#epsilon = 0.75
-epsilon = 0.5
 episodes = []
 
 # Example: { ((x, y), (ax, ay)): 233.64 } 
-def pick_action(state_action_values : dict[tuple[tuple[int, int], tuple[int, int]], float], curr_state : tuple[int, int]) -> Action: 
+def pick_action(
+        state_action_values : dict[tuple[tuple[int, int], tuple[int, int]], float], 
+        curr_state : tuple[int, int], epsilon : float) -> Action: 
 
     # ACTIONS:
     # [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -51,10 +49,10 @@ def pick_action(state_action_values : dict[tuple[tuple[int, int], tuple[int, int
     
     return Action(action[0], action[1])
     
-def resume_episode(episode_number : int):
+def resume_episode(episode_number, epsilon):
     import csv
 
-    with open(f'./episodes/epsilon_0_50/episode_{episode_number}.csv', 'w', newline='') as episodefile:
+    with open(f'./episodes/episode{episode_number}_{epsilon}.csv', 'w', newline='') as episodefile:
         observation_writer = csv.writer(episodefile, delimiter=',')
         observation_writer.writerow(["current_state", "action", "reward", "q(s, a)", "next_state", "additional_observation"])
         
@@ -80,51 +78,45 @@ def calculate_qsa(observations, curr_gama) -> int:
 # Example: { ((x, y), (ax, ay)): 233.64 } 
 state_action_values = get_state_action_pairs_average_values()
 
-
 curr_state = INITIAL_STATE
-overall_counter = 1
+overall_episodes_counter = 1
 episode_size_counter = 1
+while overall_episodes_counter <= TRAINING_EPISODES_TOTAL_QUANTITY:
+    epsilon = INITIAL_EPSILON - (INITIAL_EPSILON * (overall_episodes_counter / TRAINING_EPISODES_TOTAL_QUANTITY))
+    #print(f"epsilon: {epsilon}")
+    
+    action = pick_action(state_action_values, (curr_state.x, curr_state.y), epsilon) 
+    # print(f"Moving {action.get_graphics()}") 
+    # print(f"Now i am in the State: {curr_state}")
 
-def condition(mode : str ="validation"): # validation mode | training mode
-    c = True 
-    if mode == "validation":
-      c = overall_counter <= TRAINING_SIZE  
-    elif mode == "training":
-        pass  
-
-    return c 
-
-while condition():
-
-    action = pick_action(state_action_values, (curr_state.x, curr_state.y)) 
-    print(f"Moving {action.get_graphics()}") 
-    print(f"Now i am in the State: {curr_state}")
-
-    next_state = curr_state + action 
-    if not WALLS.__contains__(next_state) and ( (0 <= next_state.x <= WIDTH -1) and (0 <= next_state.y <= HEIGHT -1) ):
+    next_candidate_state = curr_state + action
+    is_valid_move = not WALLS.__contains__(next_candidate_state) and ( (0 <= next_candidate_state.x <= WIDTH -1) and (0 <= next_candidate_state.y <= HEIGHT -1) )
+    is_forbidden_move = not is_valid_move
+    if is_valid_move:
+        next_state = next_candidate_state
         if next_state == TERMINAL_STATE: # do it should be explictly revealed? 
             OBSERVATIONS.append(
-                (curr_state, action, 0, next_state, "Successfully reached the maze’s exit."))
+                (curr_state, action, +10, next_state, "Successfully reached the maze’s exit."))
             
-            resume_episode(overall_counter)
+            resume_episode(overall_episodes_counter, epsilon)
 
             episode_size_counter = 0
-            overall_counter += 1
+            overall_episodes_counter += 1
             curr_state = INITIAL_STATE
             continue
-        else:
-            OBSERVATIONS.append(
-                (curr_state, action, -1, next_state, "Move accepted"))
         
-        curr_state = next_state
-    else:
         OBSERVATIONS.append(
-            (curr_state, action, -100, curr_state, "Attempted to move into a wall or beyond the maze’s boundaries"))
+            (curr_state, action, -1, next_state, "Move accepted"))
+        curr_state = next_state
+
+    elif is_forbidden_move:
+        OBSERVATIONS.append(
+            (curr_state, action, -10, curr_state, "Attempted to move into a wall or beyond the maze’s boundaries"))
         
     if episode_size_counter == EPISODE_SIZE:
-        resume_episode(overall_counter)
+        resume_episode(overall_episodes_counter, epsilon)
         episode_size_counter = 1
-        overall_counter += 1
+        overall_episodes_counter += 1
         curr_state = INITIAL_STATE
     else:
         episode_size_counter += 1

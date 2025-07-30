@@ -58,7 +58,6 @@ def resume_episode(episode_number : int):
         observation_writer = csv.writer(episodefile, delimiter=',')
         observation_writer.writerow(["current_state", "action", "reward", "q(s, a)", "next_state", "additional_observation"])
         
-        print(f"OBSERVATIONS: {OBSERVATIONS}")
         # current_state, action, reward, qsa, next_state, monte_carlo_reward, observation 
         for i in range(len(OBSERVATIONS)):
             _observations = OBSERVATIONS[i:] 
@@ -81,10 +80,21 @@ def calculate_qsa(observations, curr_gama) -> int:
 # Example: { ((x, y), (ax, ay)): 233.64 } 
 state_action_values = get_state_action_pairs_average_values()
 
+
 curr_state = INITIAL_STATE
 overall_counter = 1
 episode_size_counter = 1
-while overall_counter <= TRAINING_SIZE:
+
+def condition(mode : str ="validation"): # validation mode | training mode
+    c = True 
+    if mode == "validation":
+      c = overall_counter <= TRAINING_SIZE  
+    elif mode == "training":
+        pass  
+
+    return c 
+
+while condition():
 
     action = pick_action(state_action_values, (curr_state.x, curr_state.y)) 
     print(f"Moving {action.get_graphics()}") 
